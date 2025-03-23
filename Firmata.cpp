@@ -36,6 +36,8 @@ callbackFunction FirmataClass::currentPinModeCallback = (callbackFunction)NULL;
 callbackFunction FirmataClass::currentPinValueCallback = (callbackFunction)NULL;
 callbackFunction FirmataClass::currentReportAnalogCallback = (callbackFunction)NULL;
 callbackFunction FirmataClass::currentReportDigitalCallback = (callbackFunction)NULL;
+callbackFunction FirmataClass::currentSetTrigPinCallback = (callbackFunction)NULL;
+callbackFunction FirmataClass::currentSetEchoPinCallback = (callbackFunction)NULL;
 stringCallbackFunction FirmataClass::currentStringCallback = (stringCallbackFunction)NULL;
 sysexCallbackFunction FirmataClass::currentSysexCallback = (sysexCallbackFunction)NULL;
 systemCallbackFunction FirmataClass::currentSystemResetCallback = (systemCallbackFunction)NULL;
@@ -90,6 +92,8 @@ FirmataClass::FirmataClass()
   parser.attach(DIGITAL_MESSAGE, (FirmataParser::callbackFunction)staticDigitalCallback, (void *)NULL);
   parser.attach(REPORT_ANALOG, (FirmataParser::callbackFunction)staticReportAnalogCallback, (void *)NULL);
   parser.attach(REPORT_DIGITAL, (FirmataParser::callbackFunction)staticReportDigitalCallback, (void *)NULL);
+  parser.attach(SET_TRIG_MESSAGE, (FirmataParser::callbackFunction)staticSetTrigPinCallback, (void *)NULL);
+  parser.attach(SET_ECHO_MESSAGE, (FirmataParser::callbackFunction)staticSetEchoPinCallback, (void *)NULL);
   parser.attach(SET_PIN_MODE, (FirmataParser::callbackFunction)staticPinModeCallback, (void *)NULL);
   parser.attach(SET_DIGITAL_PIN_VALUE, (FirmataParser::callbackFunction)staticPinValueCallback, (void *)NULL);
   parser.attach(STRING_DATA, (FirmataParser::stringCallbackFunction)staticStringCallback, (void *)NULL);
@@ -333,6 +337,14 @@ void FirmataClass::sendDigitalPort(byte portNumber, int portData)
 }
 
 /**
+ * Sends the ultrasone sensor distance
+ */
+void FirmataClass::sendUltrasoneDistance(byte pin, int distance)
+{
+  marshaller.sendUltrasoneDistance(pin, distance);
+}
+
+/**
  * Send a sysex message where all values after the command byte are packet as 2 7-bit bytes
  * (this is not always the case so this function is not always used to send sysex messages).
  * @param command The sysex command byte.
@@ -402,6 +414,10 @@ void FirmataClass::attach(uint8_t command, ::callbackFunction newFunction)
     case SET_DIGITAL_PIN_VALUE:
       currentPinValueCallback = newFunction;
       break;
+    case SET_TRIG_MESSAGE:
+      currentSetTrigPinCallback = newFunction;
+    case SET_ECHO_MESSAGE:
+      currentSetEchoPinCallback = newFunction;
   }
 }
 

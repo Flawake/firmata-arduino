@@ -240,6 +240,14 @@ void FirmataParser::attach(uint8_t command, callbackFunction newFunction, void *
       currentPinValueCallback = newFunction;
       currentPinValueCallbackContext = context;
       break;
+    case SET_ULTRASONE_TRIG:
+      currentSetTrigPinCallback = newFunction;
+      currentSetTrigPinCallbackContext = context;
+      break;
+    case SET_ULTRASONE_ECHO:
+      currentSetEchoPinCallback = newFunction;
+      currentSetEchoPinCallbackContext = context;
+      break;
   }
 }
 
@@ -449,6 +457,14 @@ void FirmataParser::processSysexMessage(void)
         bufferDataAtPosition('\0', end_of_string); // NULL terminate the string
         (*currentStringCallback)(currentStringCallbackContext, (const char *)&dataBuffer[string_offset]);
       }
+      break;
+    case SET_ULTRASONE_TRIG:
+      if (currentSetTrigPinCallback)
+        (*currentSetTrigPinCallback)(currentSetTrigPinCallbackContext, dataBuffer[1], NULL);
+      break;
+    case SET_ULTRASONE_ECHO:
+      if (currentSetEchoPinCallback)
+        (*currentSetEchoPinCallback)(currentSetEchoPinCallbackContext, dataBuffer[1], NULL);
       break;
     default:
       if (currentSysexCallback)

@@ -72,6 +72,8 @@ class FirmataParser
     void * currentReportDigitalCallbackContext;
     void * currentPinModeCallbackContext;
     void * currentPinValueCallbackContext;
+    void * currentSetEchoPinCallbackContext;
+    void * currentSetTrigPinCallbackContext;
     void * currentReportFirmwareCallbackContext;
     void * currentReportVersionCallbackContext;
     void * currentDataBufferOverflowCallbackContext;
@@ -86,6 +88,8 @@ class FirmataParser
     callbackFunction currentReportDigitalCallback;
     callbackFunction currentPinModeCallback;
     callbackFunction currentPinValueCallback;
+    callbackFunction currentSetEchoPinCallback;
+    callbackFunction currentSetTrigPinCallback;
     dataBufferOverflowCallbackFunction currentDataBufferOverflowCallback;
     stringCallbackFunction currentStringCallback;
     sysexCallbackFunction currentSysexCallback;

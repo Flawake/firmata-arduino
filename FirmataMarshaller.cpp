@@ -266,6 +266,22 @@ const
 }
 
 /**
+ # send an ultrasone sensor distance update
+ * @param pin The echo pin this distance was measured on
+ * @param value The measured distance in CM to an object
+ * @note The maximum value is 14-bits (16384).
+ */
+void FirmataMarshaller::sendUltrasoneDistance(uint8_t pin, uint8_t value)
+const
+{
+  if ( (Stream *)NULL == FirmataStream ) { return; }
+  FirmataStream->write(ULTRASONE_MESSAGE);
+  FirmataStream->write(pin);
+  FirmataStream->write(value);
+}
+
+
+/**
  * Send a capability query to the Firmata host application. The resulting sysex message will have
  * a CAPABILITY_RESPONSE command byte, followed by a list of byte tuples (mode and mode resolution)
  * for each pin; where each pin list is terminated by 0x7F (127).

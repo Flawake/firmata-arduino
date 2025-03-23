@@ -98,6 +98,22 @@
 // extended command set using sysex (0-127/0x00-0x7F)
 /* 0x00-0x0F reserved for user-defined commands */
 
+#ifdef ULTRASON_MESSAGE
+#undef ULTRASON_MESSAGE
+#endif
+#define ULTRASON_MESSAGE          firmata::ULTRASONE_DATA // communicate with serial devices, including other boards
+
+#ifdef SET_ECHO_MESSAGE
+#undef SET_ECHO_MESSAGE
+#endif
+#define SET_ECHO_MESSAGE          firmata::SET_ULTRASONE_ECHO // set ultrasone echo pin
+
+#ifdef SET_TRIG_MESSAGE
+#undef SET_TRIG_MESSAGE
+#endif
+#define SET_TRIG_MESSAGE          firmata::SET_ULTRASONE_TRIG // set ultrasone trig pin
+
+
 #ifdef SERIAL_MESSAGE
 #undef SERIAL_MESSAGE
 #endif
