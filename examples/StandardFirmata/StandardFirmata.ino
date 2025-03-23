@@ -66,6 +66,12 @@ unsigned long currentMillis;        // store the current value from millis()
 unsigned long previousMillis;       // for comparison with currentMillis
 unsigned int samplingInterval = 19; // how often to run the main loop (in ms)
 
+/* Ultrasone pin data*/
+typedef struct {
+  bool some;
+  uint8_t pin;
+} option;
+
 /* i2c data */
 struct i2c_device_info {
   byte addr;
@@ -76,6 +82,10 @@ struct i2c_device_info {
 
 /* for i2c read continuous more */
 i2c_device_info query[I2C_MAX_QUERIES];
+
+/*trig and echo pin*/
+option trigPin = {false, 0};
+option echoPin = {false, 0};
 
 byte i2cRxData[64];
 boolean isI2CEnabled = false;
@@ -96,6 +106,49 @@ boolean isResetting = false;
 void setPinModeCallback(byte, int);
 void reportAnalogCallback(byte analogPin, int value);
 void sysexCallback(byte, byte, byte*);
+
+void sendUltrasoneData(uint8_t distance) {
+  if (trigPin.some == false || echoPin.some == false) {
+    return;
+  }
+  Firmata.sendUltrasoneDistance(echoPin.pin, distance);
+}
+
+uint8_t read_ultrasone() {
+  if (trigPin.some == false || echoPin.some == false) {
+    return 255;
+  }
+
+  digitalWrite(trigPin.pin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin.pin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin.pin, LOW);
+
+  float duration = pulseIn(echoPin.pin, HIGH);
+  // speed of sound is 343 m/s
+  // The duration is in microseconds.
+  // duration * 0.0343 gives us the total travel distance in cm
+  // The sound has to travel twice the distance of where the object is.
+  // The time from the sensor to the object and the time back to the sensor,
+  // so devide the result by 2 to get the distance from the sensor to the object.
+  uint16_t distance = (uint16_t)((duration * .0343) / 2);
+  return (uint8_t)min(distance, 255);
+}
+
+void setTrigPin(uint8_t pin, int _) {
+  pinMode(A0, OUTPUT);
+  trigPin.pin = pin;
+  trigPin.some = true;
+  pinMode(trigPin.pin, OUTPUT);
+}
+
+void setEchoPin(uint8_t pin, int _) {
+  echoPin.pin = pin;
+  echoPin.some = true;
+  pinMode(echoPin.pin, INPUT);
+  pinMode(A0, OUTPUT);
+}
 
 /* utility functions */
 void wireWrite(byte data)
@@ -753,14 +806,6 @@ void systemResetCallback()
   isResetting = false;
 }
 
-void setUltrasonePinCallback() {
-
-}
-
-void getUltrasoneValues() {
-
-}
-
 void setup()
 {
   Firmata.setFirmwareVersion(FIRMATA_FIRMWARE_MAJOR_VERSION, FIRMATA_FIRMWARE_MINOR_VERSION);
@@ -774,7 +819,8 @@ void setup()
   Firmata.attach(SET_DIGITAL_PIN_VALUE, setPinValueCallback);
   Firmata.attach(START_SYSEX, sysexCallback);
   Firmata.attach(SYSTEM_RESET, systemResetCallback);
-  Firmata.attach(ULTRASON_MESSAGE, getUltrasoneValues);
+  Firmata.attach(SET_TRIG_MESSAGE, setTrigPin);
+  Firmata.attach(SET_ECHO_MESSAGE, setEchoPin);
 
   // to use a port other than Serial, such as Serial1 on an Arduino Leonardo or Mega,
   // Call begin(baud) on the alternate serial port and pass it to Firmata to begin like this:
@@ -790,6 +836,9 @@ void setup()
 
   systemResetCallback();  // reset to default config
 }
+
+long long lastUltrasoneSendTimems = 0;
+uint16_t samplingIntervalUltrasone = 100;
 
 /*==============================================================================
  * LOOP()
@@ -808,6 +857,14 @@ void loop()
     Firmata.processInput();
 
   // TODO - ensure that Stream buffer doesn't go over 60 bytes
+
+  //send ultrasone data once in the 100ms
+  currentMillis = millis();
+  if (currentMillis - lastUltrasoneSendTimems > samplingIntervalUltrasone) {
+    uint8_t distance = read_ultrasone();
+    sendUltrasoneData(distance);
+    lastUltrasoneSendTimems = currentMillis;
+  }
 
   currentMillis = millis();
   if (currentMillis - previousMillis > samplingInterval) {
